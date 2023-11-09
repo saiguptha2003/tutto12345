@@ -1,5 +1,5 @@
 const mongoose=require('mongoose');
-const Schema=mongoose.Schema({
+const users=mongoose.Schema({
 
     username:{
         type:String,
@@ -13,11 +13,11 @@ const Schema=mongoose.Schema({
         type:String,
         required:true
     },
-    codechefLink:{
+    codecheflink:{
         type:String,
         required:true
     },
-    codeforcesLink:{
+    codeforceslink:{
         type:String,
         required:true
     },
@@ -25,18 +25,18 @@ const Schema=mongoose.Schema({
         type:String,
         required:true
     },
-    leetcodeLink:{
+    leetcodelink:{
         type:String,
         required:true
     },
-    hackerrankLink:{
+    hackerranklink:{
         type:String,
         required:true
     },
-    hackerearth:{
+    hackerearthlink:{
         type:String,
         required:true
     }
 
 });
-module.exports=mongoose.model('Users',Schema);
+module.exports=mongoose.model('users',users);

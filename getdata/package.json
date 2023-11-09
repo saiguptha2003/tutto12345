@@ -1,5 +1,5 @@
 {
-  "name": "api2",
+  "name": "getdata",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -9,9 +9,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "express": "^4.18.2",
-    "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.0.0",
-    "node-fetch": "^3.3.2"
+    "axios": "^1.6.0",
+    "cheerio": "^1.0.0-rc.12",
+    "puppeteer": "^21.5.0"
   }
 }

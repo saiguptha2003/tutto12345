@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, {useEffect, useState} from 'react';
 
 import {
+  FlatList,
   Image,
   ScrollView,
-  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
@@ -11,15 +11,39 @@ import {
 } from 'react-native';
 import styles from './styles';
 import st from './st';
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import {NavigationContainer} from '@react-navigation/native';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import {getCodeChefProfileInfo} from './api/solveddata';
+
 const Stack = createNativeStackNavigator();
 
+const Sigin = ({navigation}) => {
+  const [email, setemail] = useState(undefined);
+  const [password, setPassword] = useState(undefined);
+  const CheckUser = async () => {
+    try {
+      let req = await fetch('http://10.1.89.155:3000/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email,
+          password: password,
+        }),
+      });
+      const data = await req.json();
+      SetUser(data);
+    } catch (err) {
+      console.warn(err);
+    }
+  };
 
+  let [User, SetUser] = useState();
 
-const Sigin = ({ navigation }) => {
-  const [Username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  useEffect(() => {
+    CheckUser();
+  }, []);
   return (
     <View style={styles.container}>
       <View>
@@ -28,8 +52,8 @@ const Sigin = ({ navigation }) => {
 
       <TextInput
         style={styles.InputText}
-        placeholder={'Username'}
-        onChangeText={text => setUsername(text)}
+        placeholder={'email'}
+        onChangeText={text => setemail(text)}
       />
       <TextInput
         style={styles.InputText}
@@ -37,7 +61,17 @@ const Sigin = ({ navigation }) => {
         secureTextEntry={true}
         onChangeText={text => setPassword(text)}
       />
-      <TouchableOpacity style={styles.appButtonContainer}>
+      <TouchableOpacity
+        style={styles.appButtonContainer}
+        onPress={async () => {
+          let f = await CheckUser();
+          console.log('asdfasdfadsfadsfsffffffffffffffffffffff');
+          console.log(User);
+          let s = User;
+          console.log(s);
+          console.log('Login Success');
+          navigation.navigate('Dashboard', User);
+        }}>
         <Text style={styles.appButtonText}>Sign In</Text>
       </TouchableOpacity>
       <View>
@@ -50,7 +84,7 @@ const Sigin = ({ navigation }) => {
   );
 };
 
-//sigup 
+//sigup
 
 const Signup = ({navigation}) => {
   const [SignupUsername, setSignupUsername] = useState('');
@@ -106,7 +140,6 @@ const Signup = ({navigation}) => {
     </View>
   );
 };
-
 
 const LinkProvider = ({route, navigation}) => {
   const Props = route.params;
@@ -182,47 +215,68 @@ const LinkProvider = ({route, navigation}) => {
   );
 };
 
-const Dashboard = (route, navigation) => {
-  let f4 = route.params;
-  const userLinks={
-    codecheflink:'https://www.codechef.com/',
-    codeforceslink:'https://codeforces.com/',
-    leetcodelink:'https://leetcode.com/',
-    hackerearthlink:'https://www.hackerearth.com/',
-    hackerranklink:'https://www.hackerrank.com/',
-    geeksforgeekslink:'https://www.geeksforgeeks.com/',
-
-  }
+const Dashboard = ({route, navigation}) => {
+  let Props = route.params;
+  let userLinks = Props;
+  const [CodeChefprofile, setCodeChefprofile] = useState();
+  const GetProfrofilebackend = async () => {
+    try {
+      let req = await fetch('http://10.1.89.155:3000/getdata', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          link: userLinks.codecheflink,
+        }),
+      });
+      const data = await req.json();
+      setCodeChefprofile(data);
+    } catch (err) {
+      console.warn(err);
+    }
+  };
+  useEffect(() => {
+    GetProfrofilebackend();
+  }, []);
+  console.log('fadsfadsfdasf', userLinks);
   const data = [
     {
       code: 'CodeChef',
       img: require('./assets/Images/icons8-codechef-250.png'),
       link: userLinks.codecheflink,
+      component: 'CodeChefDashBoard',
+      profile: CodeChefprofile,
     },
     {
       code: 'CodeForces',
       img: require('./assets/Images/code-forces.png'),
       link: userLinks.codeforceslink,
+      component: 'CodeForcesDashBoard',
     },
     {
       code: 'LeetCode',
       img: require('./assets/Images/leetcode.png'),
       link: userLinks.leetcodelink,
+      component: 'LeetCodeDashBoard',
     },
     {
       code: 'GeeksForGeeks',
       img: require('./assets/Images/icons8-geeksforgeeks-240.png'),
       link: userLinks.geeksforgeekslink,
+      component: 'GeeksForGeeksDashBoard',
     },
     {
       code: 'HackerRank',
       img: require('./assets/Images/4373234_hackerrank_logo_logos_icon.png'),
       link: userLinks.hackerranklink,
+      component: 'HackerRankDashBoard',
     },
     {
       code: 'HackerEarth',
       img: require('./assets/Images/hackerearth.223x256.png'),
       link: userLinks.hackerearthlink,
+      component: 'HackerEarthDashBoard',
     },
   ];
   return (
@@ -230,9 +284,11 @@ const Dashboard = (route, navigation) => {
       <View>
         {data.map((item, index) => (
           <TouchableOpacity
-            onPress={navigation.navigate('CodeChefDashBoard', {
-              link: item.link,
-            })}>
+            onPress={() => {
+              GetProfrofilebackend();
+              navigation.navigate(item.component, item.profile);
+              console.warn('fasfasdfdasf', item.link);
+            }}>
             <View key={index} style={st.content}>
               <Image style={st.image} source={item.img} />
               <Text style={st.heading}>{item.code}</Text>
@@ -245,10 +301,55 @@ const Dashboard = (route, navigation) => {
 };
 
 const CodeChefDashBoard = ({route}) => {
-  let f4 = route.params;
+  let result = route.params;
+
+  const [stars, setStars] = useState('');
+  function printStarsEmoji(numStars: number): void {
+    if (numStars < 0) {
+      console.log('Please provide a non-negative number of stars.');
+      return;
+    }
+
+    const stars = '⭐️';
+    let starString = '';
+
+    for (let i = 0; i < numStars; i++) {
+      starString += stars;
+    }
+    setStars(starString);
+  }
+  useEffect(() => {
+    printStarsEmoji(result.stars);
+  }, []);
+  return (
+    <View style={styles.codechefbackground}>
+      <View style={styles.userNameBox}>
+        <Text style={styles.username}>{result.username}</Text>
+        <Text style={styles.ranking}>Ranking: {result.ranking}</Text>
+        <Text style={styles.ranking}>{stars}</Text>
+      </View>
+      <View style={{paddingTop: 20}}>
+        <Text style={styles.tittle}>Recent Problems Solved</Text>
+        <ScrollView>
+          <FlatList
+            data={result.practiceProblems}
+            keyExtractor={(item, index) => index.toString()} // Use the index as the key
+            renderItem={({item}) => (
+              <View style={styles.listofPractice}>
+                <Text style={styles.listofText}>{item}</Text>
+              </View>
+            )}
+          />
+        </ScrollView>
+      </View>
+    </View>
+  );
+};
+
+const CodeForcesDashBoard = () => {
   return (
     <View>
-      <Text>{f4.link}</Text>
+      <Text>CodeForcesDashBoard</Text>
     </View>
   );
 };
@@ -266,6 +367,10 @@ const App = () => {
         <Stack.Screen name="Dashboard" component={Dashboard} />
         <Stack.Screen name="LinkProvider" component={LinkProvider} />
         <Stack.Screen name="CodeChefDashBoard" component={CodeChefDashBoard} />
+        <Stack.Screen
+          name="CodeForcesDashBoard"
+          component={CodeForcesDashBoard}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );
