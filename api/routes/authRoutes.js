@@ -11,10 +11,7 @@ router.post('/signup', (req, res) => {
     password,
     codecheflink,
     codeforceslink,
-    geeksforgeekslink,
     leetcodelink,
-    hackerranklink,
-    hackerearthlink,
   } = req.body;
 
   if (!email || !password || !username) {
@@ -26,7 +23,7 @@ router.post('/signup', (req, res) => {
       if (savedUser) {
         return res
           .status(422)
-          .json({error: 'User already exists with that email'});
+          .json({error: 'User already exists with that email', success: false});
       }
 
       const user = new Users({
@@ -35,27 +32,26 @@ router.post('/signup', (req, res) => {
         password,
         codecheflink,
         codeforceslink,
-        geeksforgeekslink,
         leetcodelink,
-        hackerranklink,
-        hackerearthlink,
       });
 
       user
         .save()
         .then(user => {
           const token = jwt.sign(
-            {_id: user._id.tostring()},
+            {_id: user._id.toString()},
             'pandurangasaiguptah',
           );
-          res.json({token});
+          res.json({token, success: true});
         })
         .catch(err => {
           console.log(err);
+          res.json({success: false});
         });
     })
     .catch(err => {
       console.log(err);
+      res.json({success: false});
     });
 });
 
@@ -102,6 +98,14 @@ router.post('/getdata', (req, res) => {
       res.json(profileInfo);
     }
   });
+});
+router.post('/getCodeForcesData', (req, res) => {
+  const {link} = req.body;
+  console.log('raj', link);
+  (async () => {
+    const result = await getCodeForcesDetials(link);
+    res.json(result);
+  })();
 });
 
 const axios = require('axios');
@@ -162,3 +166,87 @@ function getStarRating(rating) {
     return 1;
   }
 }
+async function getCodeForcesDetials(profileLink) {
+  const fetch = (await import('node-fetch')).default;
+  const result = {};
+  const username = profileLink.split('/').pop();
+  console.log(username);
+  const userInfoResponse = await fetch(
+    `https://codeforces.com/api/user.info?handles=${username}`,
+  );
+  const userInfoData = await userInfoResponse.json();
+
+  if (userInfoData.status === 'OK') {
+    const user = userInfoData.result[0];
+    result.username = user.handle;
+    result.rating = user.rating;
+    const stars = getStarRating(user.rating);
+    result.stars = stars;
+  } else {
+    result.error = 'User not found';
+    return result;
+  }
+
+  // Fetch user submissions
+  const userStatusResponse = await fetch(
+    `https://codeforces.com/api/user.status?handle=${username}`,
+  );
+  const userStatusData = await userStatusResponse.json();
+
+  if (userStatusData.status === 'OK') {
+    const successfulSubmissions = userStatusData.result.filter(
+      submission => submission.verdict === 'OK',
+    );
+    result.recentlySolvedProblems = successfulSubmissions.map(
+      submission => submission.problem.name,
+    );
+    result.totalProblemsSolved = successfulSubmissions.length;
+
+    const contestsParticipatedIn = new Set(
+      successfulSubmissions.map(submission => submission.contestId),
+    );
+    result.contestsParticipatedIn = contestsParticipatedIn.size;
+
+    // Fetch contest list
+    const contestListResponse = await fetch(
+      'https://codeforces.com/api/contest.list',
+    );
+    const contestListData = await contestListResponse.json();
+
+    if (contestListData.status === 'OK') {
+      result.contestsParticipated = contestListData.result
+        .filter(contest => contestsParticipatedIn.has(contest.id))
+        .map(contest => contest.name);
+
+      const upcomingContests = contestListData.result.filter(
+        contest => contest.phase === 'BEFORE',
+      );
+      result.upcomingContests = upcomingContests.map(
+        ({
+          durationSeconds,
+          startTimeSeconds,
+          relativeTimeSeconds,
+          ...contest
+        }) => ({
+          ...contest,
+          durationHours: durationSeconds / 3600,
+          startTime: new Date(startTimeSeconds * 1000).toLocaleString(),
+          relativeTimeHours: relativeTimeSeconds / 3600,
+        }),
+      );
+    } else {
+      result.error = 'Could not fetch contest list';
+    }
+  } else {
+    result.error = 'Could not fetch user submissions';
+  }
+
+  return result;
+}
+
+(async () => {
+  const result = await getCodeForcesDetials(
+    'https://codeforces.com/profile/saiguptha_v',
+  );
+  console.log(result);
+})();
