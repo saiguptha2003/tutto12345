@@ -23,7 +23,7 @@ const SignIn = ({navigation}) => {
 
   const checkUser = async () => {
     try {
-      let req = await fetch('http://10.1.89.155:3000/login', {
+      let req = await fetch('http://10.1.89.118:3000/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -207,7 +207,7 @@ const Dashboard = ({route, navigation}) => {
 
   const getCodeChefProfile = async () => {
     try {
-      let req = await fetch('http://10.1.89.155:3000/getdata', {
+      let req = await fetch('http://10.1.89.118:3000/getdata', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -229,7 +229,7 @@ const Dashboard = ({route, navigation}) => {
 
   const getCodeForcesProfile = async () => {
     try {
-      let req = await fetch('http://10.1.89.155:3000/getCodeForcesData', {
+      let req = await fetch('http://10.1.89.118:3000/getCodeForcesData', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
